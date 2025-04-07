@@ -1,26 +1,43 @@
-// import postgres from 'postgres';
+import postgres from 'postgres';
 
-// const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-// async function listInvoices() {
-// 	const data = await sql`
-//     SELECT invoices.amount, customers.name
-//     FROM invoices
-//     JOIN customers ON invoices.customer_id = customers.id
-//     WHERE invoices.amount = 666;
-//   `;
+// Функция для получения инвойсов с amount = 666.00
+async function listInvoices() {
+  const targetAmount = 666.00;
 
-// 	return data;
-// }
+  // Запрос к базе данных
+  const data = await sql`
+    SELECT invoices.amount, customers.name
+    FROM invoices
+    JOIN customers ON invoices.customer_id = customers.id
+    WHERE invoices.amount = ${targetAmount}
+  `;
 
+  console.log('Query result:', data); // Для отладки
+
+  // Проверяем, что данные были найдены
+  if (!Array.isArray(data) || data.length === 0) {
+    return { message: "No invoices found with amount 666" };
+  }
+
+  return data;
+}
+
+// Обработчик для GET-запроса
 export async function GET() {
-  return Response.json({
-    message:
-      'Uncomment this file and remove this line. You can delete this file when you are finished.',
-  });
-  // try {
-  // 	return Response.json(await listInvoices());
-  // } catch (error) {
-  // 	return Response.json({ error }, { status: 500 });
-  // }
+  try {
+    const data = await listInvoices();
+    console.log(data); // Для отладки
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error(error); // Логирование ошибки для диагностики
+    return new Response(JSON.stringify({ error }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
